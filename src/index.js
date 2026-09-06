@@ -1,8 +1,13 @@
 import { createClient } from '@libsql/client/web';
 
+const cors = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET,POST,OPTIONS',
+  'access-control-allow-headers': 'content-type,x-api-key,x-admin-key'
+};
 const json = (data, status = 200) => new Response(JSON.stringify(data), {
   status,
-  headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
+  headers: { ...cors, 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
 });
 
 function db(env) {
@@ -40,7 +45,7 @@ async function init(client) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,POST,OPTIONS', 'access-control-allow-headers': 'content-type,x-api-key,x-admin-key' } });
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     if (url.pathname === '/health') return json({ ok: true, service: 'usdt-wallet-worker' });
     if (!auth(request, env) && url.pathname !== '/health') return json({ error: 'authentication required' }, 401);
     let client;
@@ -77,4 +82,3 @@ export default {
     } catch (e) { return json({ error: e?.message || 'server error' }, 500); }
   }
 };
-
